@@ -13,19 +13,28 @@ devolva numeros aleatorios na seguinte lógica:
 - Você deve gerar números aleatórios inteiros entre 0 e 10
 - Guarde o último número aleatório gerado em um estado dentro da closure
 - A função interna, quando invocada, deve retornar um objeto no seguinte formato:
-{ ultimoNumero: N_AQUI: numeroAtual }
+{ ultimoNumero: N_AQUI: numeroAtual: N_AQUI }
 Acesse a página /random e atualize-a para testar sua lógica
 */
 
-app.get("/random", (req, res) => {
-  res.render("random", {
-    /* --> */ ultimoNumero: 0,
-    numeroAtual: 0 /* <-- Valores aqui */,
-  });
-});
+function criaGeradorDeNumeros() {
+  let ultimoNumero = null;
+  return function gerarNumero() {
+    const numeroAtual = Math.floor(Math.random() * 11);
+    const resultado = { ultimoNumero, numeroAtual };
+    ultimoNumero = numeroAtual;
+    return resultado;
+  };
+}
 
-app.get("/inverter", (req, res) => {
-  res.render("inverter");
+const gerarNumero = criaGeradorDeNumeros();
+
+app.get("/random", (req, res) => {
+    const {ultimoNumero, numeroAtual} = gerarNumero();
+    res.render("random", {
+    ultimoNumero,
+    numeroAtual,
+  });
 });
 
 /*
@@ -36,9 +45,18 @@ Seu programa deve funcionar de modo que, ao acessar o endereço /random,
 você deve ser capaz de digitar uma palavra, apertar o botão de enviar e
 receber a palavra invertida no alert.
 */
+app.get("/inverter", (req, res) => {
+  res.render("inverter");
+});
+
 app.get("/api/inverter/:palavraParaInverter", (req, res) => {
   const palavraParaInverter = req.params.palavraParaInverter;
-  const invertida = "PALAVRA_INVERTIDA_AQUI";
+  const invertida = function inverterPalavra(palavra) {
+    if (palavra.length === 0) {
+      return "";
+    }
+    return palavra[palavra.length - 1] + inverterPalavra(palavra.slice(0, -1));
+  }(palavraParaInverter);
   res.json(invertida);
 });
 
@@ -57,6 +75,18 @@ function pegaCorDeFundo(pegaVermelho, pegaVerde, pegaAzul) {
   const g = pegaVerde();
   const b = pegaAzul();
   return `rgb(${r}, ${g}, ${b})`;
+}
+
+function pegaVermelho() {
+  return Math.floor(Math.random() * 256);
+}
+
+function pegaVerde() {
+  return Math.floor(Math.random() * 256);
+}
+
+function pegaAzul() {
+  return Math.floor(Math.random() * 256);
 }
 
 app.get("/cores", (req, res) => {
